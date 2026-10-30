@@ -1,0 +1,10 @@
+{
+	"id": "image-refresh",
+	"name": "Image Refresh",
+	"version": "1.0.0",
+	"minAppVersion": "1.4.0",
+	"description": "Redraw embedded images in open notes when the image file changes on disk, without closing the note.",
+	"author": "Kris Khaira",
+	"authorUrl": "https://github.com/kriskhaira",
+	"isDesktopOnly": false
+}
