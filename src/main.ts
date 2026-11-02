@@ -14,9 +14,16 @@ interface EmbeddedImage {
 
 interface ImageRefreshSettings {
 	extensions: string[];
+	themeZoomOff: boolean;
 }
 
-const DEFAULT_SETTINGS: ImageRefreshSettings = { extensions: DEFAULT_EXTENSIONS };
+const DEFAULT_SETTINGS: ImageRefreshSettings = { extensions: DEFAULT_EXTENSIONS, themeZoomOff: true };
+
+// The off switch of the hold-to-zoom feature in the Minimal theme and themes that copy it (Border).
+// Since Obsidian 1.14 wraps each image in .image-wrapper, that feature shrinks the picture to 0×0 while the
+// mouse button is held, so the click lands on the empty embed: clicks on the image and on its zoom and </>
+// buttons do nothing. Obsidian 1.14 has its own zoom (click the image, then click again or use the zoom button).
+const THEME_ZOOM_OFF = "zoom-off";
 
 export default class ImageRefreshPlugin extends Plugin {
 	settings: ImageRefreshSettings = DEFAULT_SETTINGS;
@@ -29,18 +36,36 @@ export default class ImageRefreshPlugin extends Plugin {
 		this.registerEvent(this.app.vault.on("modify", (file) => this.refresh(file)));
 		this.registerEvent(this.app.vault.on("create", (file) => this.refresh(file)));
 
-		// Right-click on an embedded image → core's file menu for that image.
-		this.listenForContextMenu(document);
-		this.app.workspace.onLayoutReady(() => this.documents().forEach((doc) => this.listenForContextMenu(doc)));
-		this.registerEvent(this.app.workspace.on("window-open", (_win, win) => this.listenForContextMenu(win.document)));
+		// Each window: the right-click menu, and the theme's hold-to-zoom switched off.
+		this.setUpDocument(document);
+		this.app.workspace.onLayoutReady(() => this.documents().forEach((doc) => this.setUpDocument(doc)));
+		this.registerEvent(this.app.workspace.on("window-open", (_win, win) => this.setUpDocument(win.document)));
+		this.register(() => this.zoomOffDocs.forEach((doc) => doc.body.removeClass(THEME_ZOOM_OFF)));
 	}
 
-	private menuDocs = new WeakSet<Document>();
+	private setUpDocs = new WeakSet<Document>();
+	// Windows where this plugin added the class, so unloading never removes one that a theme setting added.
+	private zoomOffDocs = new Set<Document>();
+
+	setUpDocument(doc: Document) {
+		if (this.setUpDocs.has(doc)) return;
+		this.setUpDocs.add(doc);
+		this.listenForContextMenu(doc);
+		this.applyThemeZoomOff(doc);
+	}
+
+	applyThemeZoomOff(doc: Document) {
+		if (this.settings.themeZoomOff && !doc.body.hasClass(THEME_ZOOM_OFF)) {
+			doc.body.addClass(THEME_ZOOM_OFF);
+			this.zoomOffDocs.add(doc);
+		} else if (!this.settings.themeZoomOff && this.zoomOffDocs.has(doc)) {
+			doc.body.removeClass(THEME_ZOOM_OFF);
+			this.zoomOffDocs.delete(doc);
+		}
+	}
 
 	// Capture phase, so it runs before the editor's own handler, which would show the text-editing menu.
 	listenForContextMenu(doc: Document) {
-		if (this.menuDocs.has(doc)) return;
-		this.menuDocs.add(doc);
 		this.registerDomEvent(
 			doc,
 			"contextmenu",
@@ -143,6 +168,18 @@ class ImageRefreshSettingTab extends PluginSettingTab {
 						this.plugin.settings.extensions = parsed.length ? parsed : DEFAULT_EXTENSIONS;
 						await this.plugin.saveSettings();
 					}),
+			);
+		new Setting(this.containerEl)
+			.setName("Turn off the theme's hold-to-zoom")
+			.setDesc(
+				"Adds the theme's own 'zoom-off' switch (Minimal, Border). In Obsidian 1.14 that theme feature shrinks an image to nothing while the mouse is held, so clicks on the image and its zoom and </> buttons do nothing.",
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.themeZoomOff).onChange(async (value) => {
+					this.plugin.settings.themeZoomOff = value;
+					await this.plugin.saveSettings();
+					this.plugin.documents().forEach((doc) => this.plugin.applyThemeZoomOff(doc));
+				}),
 			);
 	}
 }
