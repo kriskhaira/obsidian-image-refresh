@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-image-refresh",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "Redraw embedded images in open Obsidian notes when the file changes on disk.",
 	"main": "main.js",
 	"scripts": {

@@ -1,9 +1,9 @@
 {
 	"id": "image-refresh",
 	"name": "Image Refresh",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"minAppVersion": "1.4.0",
-	"description": "Redraw embedded images in open notes when the image file changes on disk, right-click an embedded image for its file menu (Reveal in Finder, Copy path), and turn off the theme hold-to-zoom that breaks image clicks.",
+	"description": "Redraw embedded images in open notes when the image file changes on disk, right-click an embedded image for its file menu (Reveal in Finder, Copy path), and optionally turn off the theme hold-to-zoom that breaks image clicks.",
 	"author": "Kris Khaira",
 	"authorUrl": "https://github.com/kriskhaira",
 	"isDesktopOnly": false

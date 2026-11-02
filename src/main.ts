@@ -17,7 +17,8 @@ interface ImageRefreshSettings {
 	themeZoomOff: boolean;
 }
 
-const DEFAULT_SETTINGS: ImageRefreshSettings = { extensions: DEFAULT_EXTENSIONS, themeZoomOff: true };
+// The theme fix is opt-in: it only matters with Minimal-style themes, and it changes how the theme behaves.
+const DEFAULT_SETTINGS: ImageRefreshSettings = { extensions: DEFAULT_EXTENSIONS, themeZoomOff: false };
 
 // The off switch of the hold-to-zoom feature in the Minimal theme and themes that copy it (Border).
 // Since Obsidian 1.14 wraps each image in .image-wrapper, that feature shrinks the picture to 0×0 while the

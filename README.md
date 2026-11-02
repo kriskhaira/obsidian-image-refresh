@@ -8,7 +8,8 @@ This plugin listens for changes to image files in the vault and gives every `<im
 
 - 🎯 **Matches by file path**, not by alt text or filename, so a resized embed (`![[photo.jpg|300]]`) or a Markdown link (`![](photo.jpg)`) refreshes too, and `photo.jpg` never touches `photo.jpg.png`.
 - 🖱️ **Right-click an embedded image** for Obsidian's own file menu for that image: Reveal in Finder, Copy path (vault or system), Open in default app, Open in new tab, Rename. Obsidian 1.14's own image menu did not appear in Live Preview on the author's vault (the text-editing menu showed instead), so the plugin opens the core link menu itself. A right-click anywhere else is untouched.
-- ⚙️ **Setting:** which extensions count as images (default `png, jpg, jpeg, gif, webp, svg, bmp, avif`).
+- 🔍 **Optional theme fix (off by default):** the Minimal theme, and themes that copy it such as Border, zoom an image while the mouse button is held on it. Since Obsidian 1.14 wraps each image in a new element, that feature shrinks the image to nothing during the click, so clicking an image, or its zoom and `</>` buttons, does nothing. Turn on **Turn off the theme's hold-to-zoom** to add the theme's own `zoom-off` switch; Obsidian's built-in zoom (click the image, then click again) keeps working.
+- ⚙️ **Settings:** which extensions count as images (default `png, jpg, jpeg, gif, webp, svg, bmp, avif`), and the theme fix above.
 - 🪶 **Nothing else:** no polling, no network, no change to your notes.
 
 ## Without the plugin
