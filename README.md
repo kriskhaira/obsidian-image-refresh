@@ -7,6 +7,7 @@ Obsidian draws an embedded image once, with a URL stamped with the file's modifi
 This plugin listens for changes to image files in the vault and gives every `<img>` that shows that file a fresh URL, so the new picture appears straight away. It works in Live Preview, Source mode, Reading view, Canvas and pop-out windows.
 
 - 🎯 **Matches by file path**, not by alt text or filename, so a resized embed (`![[photo.jpg|300]]`) or a Markdown link (`![](photo.jpg)`) refreshes too, and `photo.jpg` never touches `photo.jpg.png`.
+- 🖱️ **Right-click an embedded image** for Obsidian's own file menu for that image: Reveal in Finder, Copy path (vault or system), Open in default app, Open in new tab, Rename. Obsidian 1.14's own image menu did not appear in Live Preview on the author's vault (the text-editing menu showed instead), so the plugin opens the core link menu itself. A right-click anywhere else is untouched.
 - ⚙️ **Setting:** which extensions count as images (default `png, jpg, jpeg, gif, webp, svg, bmp, avif`).
 - 🪶 **Nothing else:** no polling, no network, no change to your notes.
 

@@ -1,5 +1,16 @@
-import { App, Plugin, PluginSettingTab, Setting, TAbstractFile, TFile } from "obsidian";
-import { DEFAULT_EXTENSIONS, isWatchedExtension, parseExtensions, refreshedSrc } from "./match.ts";
+import { App, MarkdownView, Menu, Plugin, PluginSettingTab, Setting, TAbstractFile, TFile, Workspace, getLinkpath } from "obsidian";
+import { DEFAULT_EXTENSIONS, embedLinktext, isWatchedExtension, parseExtensions, refreshedSrc } from "./match.ts";
+
+// Core's link menu (Open in new tab, Copy path, Reveal in Finder…). Not in the public API, so it is optional.
+type LinkMenuWorkspace = Workspace & {
+	handleLinkContextMenu?: (menu: Menu, linktext: string, sourcePath: string) => boolean;
+};
+
+interface EmbeddedImage {
+	file: TFile;
+	linktext: string;
+	sourcePath: string;
+}
 
 interface ImageRefreshSettings {
 	extensions: string[];
@@ -17,6 +28,68 @@ export default class ImageRefreshPlugin extends Plugin {
 		// "create" as well as "modify": some writers replace a file by renaming a temp copy over it.
 		this.registerEvent(this.app.vault.on("modify", (file) => this.refresh(file)));
 		this.registerEvent(this.app.vault.on("create", (file) => this.refresh(file)));
+
+		// Right-click on an embedded image → core's file menu for that image.
+		this.listenForContextMenu(document);
+		this.app.workspace.onLayoutReady(() => this.documents().forEach((doc) => this.listenForContextMenu(doc)));
+		this.registerEvent(this.app.workspace.on("window-open", (_win, win) => this.listenForContextMenu(win.document)));
+	}
+
+	private menuDocs = new WeakSet<Document>();
+
+	// Capture phase, so it runs before the editor's own handler, which would show the text-editing menu.
+	listenForContextMenu(doc: Document) {
+		if (this.menuDocs.has(doc)) return;
+		this.menuDocs.add(doc);
+		this.registerDomEvent(
+			doc,
+			"contextmenu",
+			(evt: MouseEvent) => {
+				const menu = this.imageMenu(evt.target);
+				if (!menu) return;
+				evt.preventDefault();
+				evt.stopPropagation();
+				menu.showAtMouseEvent(evt);
+			},
+			{ capture: true },
+		);
+	}
+
+	// The menu for a right-click target, or null when it is not an embedded vault image (the normal menu then shows).
+	imageMenu(target: EventTarget | null): Menu | null {
+		const image = this.embeddedImage(target);
+		if (!image) return null;
+		const menu = new Menu();
+		const workspace = this.app.workspace as LinkMenuWorkspace;
+		if (typeof workspace.handleLinkContextMenu === "function") {
+			workspace.handleLinkContextMenu(menu, image.linktext, image.sourcePath);
+		} else {
+			this.app.workspace.trigger("file-menu", menu, image.file, "image-context-menu");
+		}
+		return menu;
+	}
+
+	embeddedImage(target: EventTarget | null): EmbeddedImage | null {
+		const el = target as HTMLElement | null;
+		if (!el || typeof el.closest !== "function") return null;
+		const img = el.closest("img");
+		const embed = img?.closest(".internal-embed[src]");
+		if (!img || !embed || !img.closest(".markdown-source-view, .markdown-preview-view")) return null;
+		const linktext = embedLinktext(embed.getAttribute("src"));
+		if (!linktext) return null;
+		const sourcePath = this.sourcePathOf(img);
+		const file = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(linktext), sourcePath);
+		if (!file || !isWatchedExtension(file.extension, this.settings.extensions)) return null;
+		return { file, linktext, sourcePath };
+	}
+
+	// The note whose view holds the element; the active note for hover popovers and other non-leaf views.
+	sourcePathOf(el: HTMLElement): string {
+		let path: string | null = null;
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			if (!path && leaf.view instanceof MarkdownView && leaf.view.containerEl.contains(el)) path = leaf.view.file?.path ?? null;
+		});
+		return path ?? this.app.workspace.getActiveFile()?.path ?? "";
 	}
 
 	refresh(file: TAbstractFile): number {
@@ -60,7 +133,7 @@ class ImageRefreshSettingTab extends PluginSettingTab {
 		this.containerEl.empty();
 		new Setting(this.containerEl)
 			.setName("Image extensions")
-			.setDesc("Comma-separated. An embedded file with one of these extensions is redrawn when it changes on disk.")
+			.setDesc("Comma-separated. An embedded file with one of these extensions is redrawn when it changes on disk, and a right-click on it opens its file menu.")
 			.addText((text) =>
 				text
 					.setPlaceholder(DEFAULT_EXTENSIONS.join(", "))

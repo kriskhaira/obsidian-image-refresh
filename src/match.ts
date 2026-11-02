@@ -24,6 +24,14 @@ export function refreshedSrc(oldSrc: string, freshResource: string, stamp: numbe
 	return `${freshResource.split(/[?#]/)[0]}?${stamp}`;
 }
 
+// The link text in an internal embed's `src` attribute (`![[photo.jpg|300]]` → "photo.jpg"),
+// or null when there is none or it is a web address rather than a vault link.
+export function embedLinktext(src: string | null): string | null {
+	const text = (src ?? "").trim();
+	if (!text || /^[a-z][a-z0-9+.-]*:\/\//i.test(text)) return null;
+	return text;
+}
+
 export function parseExtensions(text: string): string[] {
 	return text
 		.split(",")

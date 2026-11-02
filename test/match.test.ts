@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { parseExtensions, refreshedSrc, resourceKey } from "../src/match.ts";
+import { embedLinktext, parseExtensions, refreshedSrc, resourceKey } from "../src/match.ts";
 
 const base = "app://16f4/Users/k/Notes/Friends/Jane%20Doe/Attachments/Photo%20(wrong,%20IMG_0001).jpg";
 
@@ -22,5 +22,12 @@ assert.equal(refreshedSrc("https://example.com/a.jpg", `${base}?1800`, 1900), nu
 
 assert.equal(resourceKey("app://x/a%20b.png?12#frag"), "app://x/a b.png");
 assert.deepEqual(parseExtensions(" PNG, .jpg,,svg "), ["png", "jpg", "svg"]);
+
+// The right-click menu resolves an embed's link text; web addresses and empty sources are skipped.
+assert.equal(embedLinktext(" 2026-10-31 Jane's PC — screenshot.jpg "), "2026-10-31 Jane's PC — screenshot.jpg");
+assert.equal(embedLinktext("Attachments/photo.jpg#crop"), "Attachments/photo.jpg#crop");
+assert.equal(embedLinktext("https://example.com/a.jpg"), null);
+assert.equal(embedLinktext(""), null);
+assert.equal(embedLinktext(null), null);
 
 console.log("match tests passed");
