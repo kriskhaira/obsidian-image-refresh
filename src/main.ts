@@ -72,12 +72,12 @@ export default class ImageRefreshPlugin extends Plugin {
 	embeddedImage(target: EventTarget | null): EmbeddedImage | null {
 		const el = target as HTMLElement | null;
 		if (!el || typeof el.closest !== "function") return null;
-		const img = el.closest("img");
-		const embed = img?.closest(".internal-embed[src]");
-		if (!img || !embed || !img.closest(".markdown-source-view, .markdown-preview-view")) return null;
+		// Anywhere in the embed, not just the <img>: the resize corner and the hover toolbar sit on top of the picture.
+		const embed = el.closest<HTMLElement>(".internal-embed[src]");
+		if (!embed || !embed.querySelector("img") || !embed.closest(".markdown-source-view, .markdown-preview-view")) return null;
 		const linktext = embedLinktext(embed.getAttribute("src"));
 		if (!linktext) return null;
-		const sourcePath = this.sourcePathOf(img);
+		const sourcePath = this.sourcePathOf(embed);
 		const file = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(linktext), sourcePath);
 		if (!file || !isWatchedExtension(file.extension, this.settings.extensions)) return null;
 		return { file, linktext, sourcePath };

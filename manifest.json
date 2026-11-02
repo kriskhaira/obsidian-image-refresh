@@ -1,7 +1,7 @@
 {
 	"id": "image-refresh",
 	"name": "Image Refresh",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"minAppVersion": "1.4.0",
 	"description": "Redraw embedded images in open notes when the image file changes on disk, and right-click an embedded image for its file menu (Reveal in Finder, Copy path).",
 	"author": "Kris Khaira",
